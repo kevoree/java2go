@@ -9,45 +9,58 @@ public class ClassTranslator {
 
     public static void translate(PsiClass clazz, TranslationContext ctx) {
         if (clazz.isInterface()) {
-            ctx.print("export interface ");
+            ctx.print("type ");
+            ctx.append(clazz.getName());
+            ctx.print(" interface {");
+            ctx.increaseIdent();
+            PsiField[] fields = clazz.getFields();
+            for (PsiField field : fields) {
+                FieldTranslator.translate(field, ctx);
+            }
+            ctx.decreaseIdent();
+            ctx.print("}\n");
         } else {
-            ctx.print("export class ");
-        }
-        ctx.append(clazz.getName());
-        PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
-        if (typeParameters.length > 0) {
-            ctx.append('<');
-            for (int i = 0; i < typeParameters.length; i++) {
-                PsiTypeParameter p = typeParameters[i];
-                ctx.append(p.getName());
-                PsiClassType[] extentions = p.getExtendsList().getReferencedTypes();
-                if (extentions.length > 0) {
-                    ctx.append(" extends ");
-                    for (PsiClassType ext : extentions) {
-                        ctx.append(TypeHelper.printType(ext, ctx));
+            ctx.print("type ");
+            ctx.append(clazz.getName());
+            ctx.print(" struct {");
+            PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
+            if (typeParameters.length > 0) {
+                ctx.append('<');
+                for (int i = 0; i < typeParameters.length; i++) {
+                    PsiTypeParameter p = typeParameters[i];
+                    ctx.append(p.getName());
+                    PsiClassType[] extentions = p.getExtendsList().getReferencedTypes();
+                    if (extentions.length > 0) {
+                        ctx.append(" extends ");
+                        for (PsiClassType ext : extentions) {
+                            ctx.append(TypeHelper.printType(ext, ctx));
+                        }
+                    }
+                    if (i != typeParameters.length - 1) {
+                        ctx.append(", ");
                     }
                 }
-                if (i != typeParameters.length - 1) {
-                    ctx.append(", ");
-                }
+                ctx.append('>');
             }
-            ctx.append('>');
+            PsiClassType[] extendsList = clazz.getExtendsListTypes();
+            if (extendsList.length != 0 && !clazz.isEnum()) {
+                ctx.append(" extends ");
+                writeTypeList(ctx, extendsList);
+            }
+            PsiClassType[] implementsList = clazz.getImplementsListTypes();
+            if (implementsList.length != 0) {
+                ctx.append(" implements ");
+                writeTypeList(ctx, implementsList);
+            }
+            ctx.append(" {\n\n");
+            ctx.increaseIdent();
+            printClassFields(clazz, ctx);
+            ctx.decreaseIdent();
+            ctx.print("}\n");
+            printClassMethods(clazz, ctx);
+            ctx.append("\n");
+            printInnerClasses(clazz, ctx);
         }
-        PsiClassType[] extendsList = clazz.getExtendsListTypes();
-        if (extendsList.length != 0 && !clazz.isEnum()) {
-            ctx.append(" extends ");
-            writeTypeList(ctx, extendsList);
-        }
-        PsiClassType[] implementsList = clazz.getImplementsListTypes();
-        if (implementsList.length != 0) {
-            ctx.append(" implements ");
-            writeTypeList(ctx, implementsList);
-        }
-        ctx.append(" {\n\n");
-        printClassMembers(clazz, ctx);
-        ctx.print("}\n");
-        ctx.append("\n");
-        printInnerClasses(clazz, ctx);
     }
 
     private static void printInnerClasses(PsiClass element, TranslationContext ctx) {
@@ -64,12 +77,14 @@ public class ClassTranslator {
         }
     }
 
-    private static void printClassMembers(PsiClass clazz, TranslationContext ctx) {
-        ctx.increaseIdent();
+    private static void printClassFields(PsiClass clazz, TranslationContext ctx) {
         PsiField[] fields = clazz.getFields();
         for (PsiField field : fields) {
             FieldTranslator.translate(field, ctx);
         }
+    }
+
+    private static void printClassMethods(PsiClass clazz, TranslationContext ctx) {
         PsiClassInitializer[] initializers = clazz.getInitializers();
         for (PsiClassInitializer initializer : initializers) {
             if (initializer.hasModifierProperty("static")) {
@@ -127,13 +142,12 @@ public class ClassTranslator {
             ctx.print("}\n");
 
         }
-        ctx.decreaseIdent();
     }
 
     private static void writeTypeList(TranslationContext ctx, PsiClassType[] typeList) {
         for (int i = 0; i < typeList.length; i++) {
             PsiClassType type = typeList[i];
-            ctx.append(TypeHelper.printType(type, ctx,true,true));
+            ctx.append(TypeHelper.printType(type, ctx, true, true));
             if (i != typeList.length - 1) {
                 ctx.append(", ");
             }
