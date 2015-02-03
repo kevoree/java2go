@@ -48,7 +48,6 @@ public class FlatJUnitGenerator {
     }
 
     private String instanciateClass(PsiClass clazz) {
-
         return "try {\n" + clazz.getQualifiedName() + " p_" + clazz.getName().toLowerCase() + " = new " +  clazz.getQualifiedName() + "();\n";
     }
 

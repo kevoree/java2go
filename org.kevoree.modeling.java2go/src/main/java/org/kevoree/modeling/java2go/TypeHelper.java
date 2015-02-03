@@ -19,15 +19,31 @@ public class TypeHelper {
 
     public static String printType(PsiType element, TranslationContext ctx, boolean withGenericParams, boolean explicitType) {
         String result = element.getPresentableText();
-        if (objects.contains(result)) {
-            return "any";
-        } else if (primitiveNumbers.contains(result) || objectNumbers.contains(result)) {
-            return "number";
-        } else if (strings.contains(result)) {
-            return "string";
-        } else if (booleans.contains(result)) {
-            return "boolean";
+        if (result.equals(Integer.class.getName()) || result.equals(Integer.class.getSimpleName()) || result.equals("int")) {
+            return "int";
         }
+        if (result.equals(String.class.getName()) || result.equals(String.class.getSimpleName())) {
+            return "string";
+        }
+        if (result.equals(Character.class.getName()) || result.equals(Character.class.getSimpleName()) || result.equals("char")) {
+            return "char";
+        }
+        if (result.equals(Long.class.getName()) || result.equals(Long.class.getSimpleName()) || result.equals("long")) {
+            return "int64";
+        }
+        if (result.equals(Byte.class.getName()) || result.equals(Byte.class.getSimpleName()) || result.equals("byte")) {
+            return "byte";
+        }
+        if (result.equals(Float.class.getName()) || result.equals(Float.class.getSimpleName()) || result.equals("float")) {
+            return "float64";
+        }
+        if (result.equals(Boolean.class.getName()) || result.equals(Boolean.class.getSimpleName()) || result.equals("boolean")) {
+            return "bool";
+        }
+        if (objects.contains(result)) {
+            return "interface{}";
+        }
+
 
         if (element instanceof PsiPrimitiveType) {
             if (result == null || result.equals("null")) {
@@ -38,8 +54,8 @@ public class TypeHelper {
             PsiArrayType typedElement = (PsiArrayType) element;
             String partialResult = printType(typedElement.getComponentType(), ctx);
 
-            if(typedElement.getComponentType() instanceof PsiClassReferenceType) {
-                PsiClass resolvedClass = ((PsiClassReferenceType)typedElement.getComponentType()).resolve();
+            if (typedElement.getComponentType() instanceof PsiClassReferenceType) {
+                PsiClass resolvedClass = ((PsiClassReferenceType) typedElement.getComponentType()).resolve();
                 if (resolvedClass != null) {
                     if (isCallbackClass(resolvedClass) && !explicitType) {
                         //'{ (p: KEvent): void; }[]' is not assignable to type '(p: KEvent) => void[]'.
@@ -118,14 +134,14 @@ public class TypeHelper {
     }
 
     public static boolean isCallbackClass(PsiClass clazz) {
-        if(clazz == null){
+        if (clazz == null) {
             return false;
         }
         return clazz.isInterface() && clazz.getAllMethods().length == 1;
     }
 
     public static String primitiveStaticCall(String clazz) {
-        if(clazz.equals("String")) {
+        if (clazz.equals("String")) {
             return "StringUtils";
         }
         String result = javaTypes.get(clazz);
@@ -148,7 +164,7 @@ public class TypeHelper {
         javaTypes.put("HashSet", "java.util.HashSet");
         javaTypes.put("ArrayList", "java.util.ArrayList");
         javaTypes.put("LinkedList", "java.util.LinkedList");
-     //   javaTypes.put("Assert", "org.junit.Assert");
+        //   javaTypes.put("Assert", "org.junit.Assert");
         javaTypes.put("Random", "java.util.Random");
 
         javaTypes.put("Long", "java.lang.Long");
@@ -164,7 +180,7 @@ public class TypeHelper {
         javaTypes.put("IndexOutOfBoundsException", "java.lang.IndexOutOfBoundsException");
     }
 
-    public static final Set<String> primitiveNumbers = ImmutableSet.of("byte", "short", "int", "long", "float", "double");
+    public static final Set<String> primitiveNumbers = ImmutableSet.of("byte", "short", "int", "long", "float", "double", "boolean");
 
     public static final Set<String> objectNumbers = ImmutableSet.of(
             Byte.class.getName(),

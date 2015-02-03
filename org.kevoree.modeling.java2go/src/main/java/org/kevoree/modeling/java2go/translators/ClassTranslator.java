@@ -11,18 +11,35 @@ public class ClassTranslator {
         if (clazz.isInterface()) {
             ctx.print("type ");
             ctx.append(clazz.getName());
-            ctx.print(" interface {");
+            ctx.print(" interface {\n");
             ctx.increaseIdent();
             PsiField[] fields = clazz.getFields();
             for (PsiField field : fields) {
                 FieldTranslator.translate(field, ctx);
+            }
+            PsiMethod[] methods = clazz.getAllMethods();
+            for (PsiMethod method : methods) {
+                ctx.print(method.getName());
+                ctx.append("(");
+                PsiParameter[] parameters = method.getParameterList().getParameters();
+                for(int i=0;i<parameters.length;i++){
+                    PsiParameter param = parameters[i];
+                    if(i!=0){
+                        ctx.append(",");
+                    }
+                    ctx.append(param.getName()+" : "+TypeHelper.printType(param.getType(),ctx));
+                }
+                ctx.append(")");
+                ctx.append(" : ");
+                ctx.append(TypeHelper.printType(method.getReturnType(), ctx));
+                ctx.append("\n");
             }
             ctx.decreaseIdent();
             ctx.print("}\n");
         } else {
             ctx.print("type ");
             ctx.append(clazz.getName());
-            ctx.print(" struct {");
+            ctx.print(" struct");
             PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
             if (typeParameters.length > 0) {
                 ctx.append('<');

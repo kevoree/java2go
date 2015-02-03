@@ -94,6 +94,7 @@ public class CompilePlugin extends AbstractMojo {
             throw new MojoExecutionException(e.getMessage());
         }
 
+        /*
         if (targetJS != null) {
             try {
                 TSCRunner.run(target, targetJS, libraries, copyLibDTs);
@@ -101,6 +102,7 @@ public class CompilePlugin extends AbstractMojo {
                 throw new MojoExecutionException("TypeScript compilation failed !",e);
             }
         }
+        */
 
     }
 
